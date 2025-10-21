@@ -12,7 +12,7 @@ git clone https://github.com/BertramAakjaer/Authentication-AAU.git
 cd Authentication-AAU/
 
 # Install required libraries
-pip install -r requirements
+pip install -r requirements.txt
 
 # Run the script using streamlit and it should open in your default browser
 python main.py # I kan også trykke play in VScode
