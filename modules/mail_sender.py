@@ -38,6 +38,8 @@ def send_mail(auth_pass, reciever_mail, do_not_send=False):
     
     try:
         result = mailjet.send.create(data=data)
+        
+        ## Debug \/
         # print(f"Status: {result.status_code}")
         # print(f"Response JSON:{result.json()}")
 
