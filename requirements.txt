@@ -1,0 +1,2 @@
+mailjet-rest
+python-dotenv
