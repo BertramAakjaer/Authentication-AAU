@@ -16,7 +16,8 @@ pip install -r requirements.txt
 
 # Run the script using streamlit and it should open in your default browser
 python main.py # I kan også trykke play in VScode
-```
 
-<!-- Run the script using streamlit and it should open in your default browser -->
-<!-- python -m streamlit run main.py -->
+# Kør koden med ui
+python -m streamlit run ui.py
+
+```

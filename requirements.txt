@@ -1,2 +1,3 @@
 mailjet-rest
 python-dotenv
+streamlit

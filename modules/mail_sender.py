@@ -6,7 +6,8 @@ import os
 def send_mail(auth_pass, reciever_mail, do_not_send=False):
     
     if (do_not_send):
-        return
+        print("Did not send")
+        return True
     
     load_dotenv()
 
@@ -22,7 +23,7 @@ def send_mail(auth_pass, reciever_mail, do_not_send=False):
             {
                 "From": {
                     "Email": sender_email,
-                    "Name": "AAU DC1 GR3 Authentication"
+                    "Name": "OTP Authentication"
                 },
                 "To": [
                     {
@@ -30,8 +31,8 @@ def send_mail(auth_pass, reciever_mail, do_not_send=False):
                         "Name": "Recipient Name"
                     }
                 ],
-                "Subject": "Your code to login",
-                "TextPart": f"Here is the authentication code to login on the site: {auth_pass}"
+                "Subject": "P1 project, OTP code to login",
+                "TextPart": f"Here is the OTP authentication code to login on the site: {auth_pass}"
             }
         ]
     }
@@ -44,9 +45,12 @@ def send_mail(auth_pass, reciever_mail, do_not_send=False):
         # print(f"Response JSON:{result.json()}")
 
         if result.status_code == 200:
-            print("\nEmail sent successfully!")
+            # print("\nEmail sent successfully!")
+            return True
         else:
-            print("\nEmail sending failed. Check the response JSON for errors.")
+            # print("\nEmail sending failed. Check the response JSON for errors.")
+            return False
 
     except Exception as e:
         print(f"An error occurred: {e}")
+    
