@@ -33,25 +33,23 @@ def home():
         return redirect(url_for('dashboard'))
     return redirect(url_for('login'))
 
-@app.route('/send_auth', methods=['GET', 'POST'])
+
+@app.route('/send_auth', methods=['POST'])
 def send_auth():
     if 'logged_in' in session:
         return redirect(url_for('dashboard'))
     
-    if request.method == 'POST':
-        user_mail = request.form.get('email')
-        
-        auth_pass = pass_random()
-        pass_manager.add_password(user_mail, auth_pass)
+    user_mail = request.form.get('email')
     
-        if send_mail(auth_pass, user_mail):
-            flash("Authentication code send to {user_mail}", "success")
-            return redirect(url_for('dashboard'))
-        else:
-            flash("Email could not be sent!", "danger")
-            
-    return render_template('login.html')
+    auth_pass = pass_random()
+    pass_manager.add_password(user_mail, auth_pass)
 
+    if send_mail(auth_pass, user_mail):
+        flash("Authentication code send to {user_mail}", "success")
+    else:
+        flash("Email could not be sent!", "danger")
+            
+    return render_template(url_for('login'))
 
 
 
@@ -67,11 +65,11 @@ def login():
         if pass_manager.get_password(user_mail, user_auth_pass):
             session['logged_in'] = True
             session['username'] = user_mail
+            flash("Login Successful!", "success")
             return redirect(url_for('dashboard'))
         else:
             flash("Invalid or expired authentication password!", "danger")
-
-    return render_template('login.html')
+    return render_template(url_for('login'))
 
 
 @app.route('/dashboard')

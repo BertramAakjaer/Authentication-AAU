@@ -31,7 +31,7 @@
                 <form method="POST" action="{{ url_for('send_auth') }}">
                     <div class="mb-3">
                         <label for="email" class="form-label">E-mail</label>
-                        <input type="text" class="form-control rounded-3" id="email" name="email" required placeholder="example@gmail.com">
+                        <input type="text" class="form-control rounded-3" id="email" name="email" required placeholder="Example: example@gmail.com">
                     </div>
                     <button type="submit" class="btn btn-primary w-100 rounded-3 py-2 shadow-sm">Send Authentication Password!</button>
                 </form>
@@ -39,7 +39,7 @@
                 <form method="POST" action="{{ url_for('login') }}">
                     <div class="mb-4">
                         <label for="auth_pass" class="form-label">Authentication Password</label>
-                        <input type="password" class="form-control rounded-3" id="auth_pass" name="auth_pass" required placeholder="Ex4mPl3">
+                        <input type="password" class="form-control rounded-3" id="auth_pass" name="auth_pass" required placeholder="Example: Ex4mPl3">
                     </div>
                     <button type="submit" class="btn btn-primary w-100 rounded-3 py-2 shadow-sm">Log In</button>
                 </form>
