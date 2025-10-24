@@ -5,8 +5,11 @@ def pass_random():
 
     auth_pass = ""
 
-    for i in range(6):
-        auth_pass += random.choice(letters)
+    for i in range(8):
+        temp = random.choice(letters)
+        if random.randint(1, 100) > 50:
+            temp = temp.upper()
+        auth_pass += temp
 
     print(auth_pass)
     return auth_pass

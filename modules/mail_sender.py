@@ -6,17 +6,7 @@ import os
 def send_mail(auth_pass, reciever_mail, do_not_send=False):
     
     if (do_not_send):
-        print("Did not send")
-        
-        
-        load_dotenv()
-        api_key = os.getenv("API_PUBLIC")
-        api_secret = os.getenv("API_SECRET")
-        sender_email = os.getenv("EMAIL_SENDER")
-        
-        print(f"Key: {api_key}")
-        print(f"Secret: {api_secret}")
-        print(f"Mail: {sender_email}")
+        print("Did not send mail")
         
         return True
     

@@ -1,17 +1,14 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import os
 
+from modules.password_generator import pass_random
+import modules.password_manager as pass_manager
 from modules.mail_sender import send_mail
+
 
 app = Flask(__name__)
 
 app.secret_key = os.environ.get('SECRET_KEY', os.urandom(24))
-
-send_mail("lalal", "lalalla", True)
-
-
-
-
 
 USERS = {
     "admin": "password123",
@@ -19,7 +16,6 @@ USERS = {
 }
 
 def login_required(f):
-    """Decorator to protect routes that require a logged-in user."""
     def decorated_function(*args, **kwargs):
         if 'logged_in' not in session:
             flash("Please log in to access this page.", "danger")
@@ -34,8 +30,30 @@ def login_required(f):
 @app.route("/")
 def home():
     if 'logged_in' in session:
-        return redirect(url_for('user_dashboard'))
+        return redirect(url_for('dashboard'))
     return redirect(url_for('login'))
+
+@app.route('/send_mail', methods=['GET', 'POST'])
+def login():
+    if 'logged_in' in session:
+        return redirect(url_for('dashboard'))
+    
+    if request.method == 'POST':
+        user_mail = request.form.get('email')
+        
+        auth_pass = pass_random()
+        pass_manager.add_password(user_mail, auth_pass)
+    
+        if send_mail(auth_pass, user_mail):
+            flash("Authentication code send to {user_mail}", "success")
+            return redirect(url_for('dashboard'))
+        else:
+            flash("Email could not be sent!", "danger")
+            
+    return render_template('login.html')
+
+
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -43,18 +61,15 @@ def login():
         return redirect(url_for('dashboard'))
 
     if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
+        user_mail = request.form.get('email')
+        user_auth_pass = request.form.get('auth_pass')
 
-        # Check credentials against the dummy database
-        if username in USERS and USERS[username] == password:
+        if pass_manager.get_password(user_mail, user_auth_pass):
             session['logged_in'] = True
-            session['username'] = username
-            flash(f"Welcome, {username}! You are logged in.", "success")
+            session['username'] = user_mail
             return redirect(url_for('dashboard'))
         else:
-            flash("Invalid username or password. Try 'admin'/'password123'.", "danger")
-            # Stay on the login page
+            flash("Invalid or expired authentication password!", "danger")
 
     return render_template('login.html')
 

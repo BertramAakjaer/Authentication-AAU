@@ -3,7 +3,7 @@ import time
 
 passwords = [] # Formatted like [email, password, timestamp]
 
-max_pass_time = 10
+max_pass_time = 60 * 10
 
 
 def add_password(email, auth_pass):
