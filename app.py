@@ -33,8 +33,8 @@ def home():
         return redirect(url_for('dashboard'))
     return redirect(url_for('login'))
 
-@app.route('/send_mail', methods=['GET', 'POST'])
-def login():
+@app.route('/send_auth', methods=['GET', 'POST'])
+def send_auth():
     if 'logged_in' in session:
         return redirect(url_for('dashboard'))
     
