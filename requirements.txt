@@ -1,3 +1,4 @@
 mailjet-rest
 python-dotenv
 streamlit
+flask
