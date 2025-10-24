@@ -2,3 +2,4 @@ mailjet-rest
 python-dotenv
 streamlit
 flask
+flask-bcrypt
