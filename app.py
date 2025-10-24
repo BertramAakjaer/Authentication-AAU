@@ -1,73 +1,69 @@
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify
-import json
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 import os
-from flask_bcrypt import Bcrypt
 
 app = Flask(__name__)
-app.secret_key = os.urandom(24)  # Required for session management
-bcrypt = Bcrypt(app)
 
-# Helper functions for JSON storage
-def read_users():
-    with open("data.json", "r") as file:
-        data = json.load(file)
-    return data["users"]
+app.secret_key = os.environ.get('SECRET_KEY', os.urandom(24))
 
-def write_users(users):
-    with open("data.json", "w") as file:
-        json.dump({"users": users}, file, indent=4)
+USERS = {
+    "admin": "password123",
+    "User": "guest"
+}
 
-# Routes
+def login_required(f):
+    """Decorator to protect routes that require a logged-in user."""
+    def decorated_function(*args, **kwargs):
+        if 'logged_in' not in session:
+            flash("Please log in to access this page.", "danger")
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    decorated_function.__name__ = f.__name__
+    return decorated_function
+
+
+
+
 @app.route("/")
 def home():
-    if "username" in session:
-        return redirect(url_for("profile_dashboard"))
-    return redirect(url_for("index"))
+    if 'logged_in' in session:
+        return redirect(url_for('user_dashboard'))
+    return redirect(url_for('login'))
 
-@app.route("/login", methods=["GET", "POST"])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
+    if 'logged_in' in session:
+        return redirect(url_for('dashboard'))
 
-        users = read_users()
-        user = next((u for u in users if u["username"] == username), None)
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
 
-        if user and bcrypt.check_password_hash(user["password"], password):
-            session["username"] = username
-            return redirect(url_for("profile_dashboard"))
+        # Check credentials against the dummy database
+        if username in USERS and USERS[username] == password:
+            session['logged_in'] = True
+            session['username'] = username
+            flash(f"Welcome, {username}! You are logged in.", "success")
+            return redirect(url_for('dashboard'))
         else:
-            return render_template("index.html", error="Invalid credentials")
+            flash("Invalid username or password. Try 'admin'/'password123'.", "danger")
+            # Stay on the login page
 
-    return render_template("index.html")
+    return render_template('login.html')
 
-@app.route("/register", methods=["GET", "POST"])
-def register():
-    if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
-        hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
 
-        users = read_users()
-        if any(u["username"] == username for u in users):
-            return render_template("register.html", error="Username already exists")
-
-        users.append({"username": username, "password": hashed_password})
-        write_users(users)
-        return redirect(url_for("index"))
-
-    return render_template("register.html")
-
-@app.route("/profile_dashboard")
+@app.route('/dashboard')
+@login_required
 def dashboard():
-    if "username" not in session:
-        return redirect(url_for("index"))
-    return render_template("profile_dashboard.html", username=session["username"])
+    """The protected page accessible only after successful login."""
+    return render_template('user_dashboard.html', username=session.get('username'))
 
-@app.route("/logout")
+@app.route('/logout')
 def logout():
-    session.pop("username", None)
-    return redirect(url_for("index"))
+    """Handles user logout by clearing the session."""
+    session.pop('logged_in', None)
+    session.pop('username', None)
+    flash("You have been logged out.", "info")
+    return redirect(url_for('login'))
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000, debug=True)
+    app.run(host="0.0.0.0", port=10000)
