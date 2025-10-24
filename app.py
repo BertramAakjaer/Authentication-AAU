@@ -1,9 +1,17 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import os
 
+from modules.mail_sender import send_mail
+
 app = Flask(__name__)
 
 app.secret_key = os.environ.get('SECRET_KEY', os.urandom(24))
+
+send_mail("lalal", "lalalla", True)
+
+
+
+
 
 USERS = {
     "admin": "password123",
