@@ -1,7 +1,10 @@
 from mailjet_rest import Client
 from dotenv import load_dotenv
-import os
+import os, re
 
+
+def is_valid_email(email):
+    return re.match(r"[^@]+@[^@]+\.[^@]+", email) is not None
 
 def send_mail(auth_pass, reciever_mail, do_not_send=False):
     
@@ -9,6 +12,10 @@ def send_mail(auth_pass, reciever_mail, do_not_send=False):
         print("Did not send mail")
         
         return True
+    
+    
+    if not is_valid_email(reciever_mail):
+        return False
     
     load_dotenv()
 
@@ -42,11 +49,11 @@ def send_mail(auth_pass, reciever_mail, do_not_send=False):
         result = mailjet.send.create(data=data)
         
         ## Debug \/
-        # print(f"Status: {result.status_code}")
-        # print(f"Response JSON:{result.json()}")
+        #print(f"Status: {result.status_code}")
+        #print(f"Response JSON:{result.json()}")
 
         if result.status_code == 200:
-            # print("\nEmail sent successfully!")
+            #print("\nEmail sent successfully!")
             return True
         else:
             # print("\nEmail sending failed. Check the response JSON for errors.")

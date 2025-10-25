@@ -5,8 +5,8 @@ from modules.password_generator import pass_random
 import modules.password_manager as pass_manager
 from modules.mail_sender import send_mail
 
-
 app = Flask(__name__)
+
 
 app.secret_key = os.environ.get('SECRET_KEY', os.urandom(24))
 
@@ -34,42 +34,61 @@ def home():
     return redirect(url_for('login'))
 
 
-@app.route('/send_auth', methods=['POST'])
-def send_auth():
-    if 'logged_in' in session:
-        return redirect(url_for('dashboard'))
-    
-    user_mail = request.form.get('email')
-    
-    auth_pass = pass_random()
-    pass_manager.add_password(user_mail, auth_pass)
-
-    if send_mail(auth_pass, user_mail):
-        flash("Authentication code send to {user_mail}", "success")
-    else:
-        flash("Email could not be sent!", "danger")
-            
-    return render_template(url_for('login'))
-
-
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if 'logged_in' in session:
         return redirect(url_for('dashboard'))
 
     if request.method == 'POST':
-        user_mail = request.form.get('email')
-        user_auth_pass = request.form.get('auth_pass')
+        email = request.form.get('email')
+        action_type = request.form.get('submit_action') # New way to distinguish action
 
-        if pass_manager.get_password(user_mail, user_auth_pass):
-            session['logged_in'] = True
-            session['username'] = user_mail
-            flash("Login Successful!", "success")
-            return redirect(url_for('dashboard'))
-        else:
-            flash("Invalid or expired authentication password!", "danger")
-    return render_template(url_for('login'))
+        if action_type == 'send_code':
+            # --- Code Sending Logic ---
+            # 1. Check if the user/email is actually registered (if applicable)
+            # if email not in USERS:
+            #     flash("Email not found.", "danger")
+            #     return render_template('login.html', request=request) # Pass request object to keep email
+
+            auth_pass = pass_random() # Generates the code
+            
+            # Use the secure pass_manager functions
+            try:
+                pass_manager.add_password(email, auth_pass) # Stores hashed, with expiry
+                send_mail(auth_pass, email)
+                
+                # Pass the email to the session or flash message to help the user
+                flash(f"Authentication code sent to {email}. Please check your inbox.", "success")
+                session['last_sent_email'] = email # Store email in session for potential pre-fill/display
+            except Exception as e:
+                # Log the error (e)
+                flash("Email could not be sent. Please try again.", "danger")
+
+            # Redirect with the email value to keep it in the form after flash
+            return render_template('login.html', last_sent_email=email) 
+            
+        elif action_type == 'login':
+            # --- Login Verification Logic ---
+            user_auth_pass = request.form.get('auth_pass')
+            
+            if not user_auth_pass:
+                 flash("Please enter the authentication code.", "danger")
+                 return render_template('login.html', last_sent_email=email)
+            
+            # Use the secure pass_manager function: checks hash, checks expiry, and deletes on success
+            if pass_manager.get_password(email, user_auth_pass):
+                session['logged_in'] = True
+                session['username'] = email
+                session.pop('last_sent_email', None) # Clean up temporary session data
+                flash("Login Successful!", "success")
+                return redirect(url_for('dashboard'))
+            else:
+                flash("Invalid, expired, or already used authentication code!", "danger")
+                # Keep the email for re-sending the code if they wish
+                return render_template('login.html', last_sent_email=email)
+
+    # For a GET request
+    return render_template('login.html')
 
 
 @app.route('/dashboard')
