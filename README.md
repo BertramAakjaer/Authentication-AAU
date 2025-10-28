@@ -20,4 +20,6 @@ python main.py # I kan også trykke play in VScode
 # Kør koden med ui
 python -m streamlit run ui.py
 
+# Kør serveren
+python app.py
 ```
