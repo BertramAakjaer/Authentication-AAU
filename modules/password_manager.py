@@ -26,6 +26,7 @@ def verify_auth_code(email, user_written_pass):
     
     for i in auth_codes:
         if i[0] == email and i[1] == user_written_pass:
+            auth_codes.remove(i)
             return True
         
     return False
