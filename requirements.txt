@@ -1,7 +1,9 @@
 mailjet-rest
 python-dotenv
-streamlit
 flask
 flask-bcrypt
 Flask
 gunicorn
+pyjwt 
+supabase
+bcrypt
