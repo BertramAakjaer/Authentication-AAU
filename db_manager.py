@@ -64,6 +64,7 @@ def get_pass(email):
     except Exception as e:
         print(f"Error fetching data: {e}")
         row_data = None
+        
     
     if row_data:
         user_pass = row_data.get("password")

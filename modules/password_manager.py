@@ -2,7 +2,7 @@ import time
 
 auth_codes = [] # Formateret son [email, password, timestamp]
 
-max_auth_time = 60 * 10
+max_auth_time = 60 * 5 # Max tid for authentication password
 
 
 # Til at tilføje nye auth koder
