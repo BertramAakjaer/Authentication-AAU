@@ -1,5 +1,7 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
-import os
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, make_response
+from functools import wraps
+from dotenv import load_dotenv
+import os, jwt, time
 
 # Vores enge funktion kald
 from modules.password_generator import pass_random
@@ -7,35 +9,109 @@ import modules.password_manager as pass_manager
 from modules.mail_sender import send_mail
 
 
-app = Flask(__name__) # Starter serveren
 
-app.secret_key = os.environ.get("SECRET_KEY", os.urandom(24)) # "SECRET_KEY" findes ikke
+app = Flask(__name__)
+
+load_dotenv() # Henter api keys
+
+
+# JWT configuration
+app.secret_key = os.getenv("SECRET_KEY", os.urandom(24))
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", os.urandom(32))
+
+JWT_ALGORITHM = 'HS256' # SHA-256
+JWT_EXPIRATION_HOURS = 24 * 3600 # Så længe en token gælder (10 timer)
+
+
+
 
 
 #########################################################
 #                                                       #
-#   Modtagning og håndtering af kald med serveren \/    #
+#   JWT Helper Functions                                #
+#                                                       #
+#########################################################
+
+def create_jwt_token(email):
+    current_time = int(time.time())
+    expiration_time = current_time + (JWT_EXPIRATION_HOURS)
+    
+    payload = {
+        'email': email,
+        'exp': expiration_time,
+        'iat': current_time
+    }
+    token = jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+    return token
+
+
+def decode_jwt_token(token): # Tjekker om det gældne token kan dekrypteres og tjekker om det er udløbet
+    try:
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=JWT_ALGORITHM)
+        return payload
+    except jwt.ExpiredSignatureError:
+        return None  # Token er udløbet
+    except jwt.InvalidTokenError:
+        return None  # Ugyldigt token
+
+
+def get_token_from_request():
+    token = request.cookies.get('jwt_token')
+    return token
+
+
+def jwt_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        token = get_token_from_request()
+        
+        if not token:
+            flash("Please log in to access this page.", "danger")
+            return redirect(url_for("login"))
+        
+        payload = decode_jwt_token(token)
+        if not payload:
+            flash("Session expired. Please log in again.", "danger")
+            return redirect(url_for("login"))
+        
+        # Tilføj ens email til request context så det kan vises på skærmen
+        request.current_user = payload['email']
+        return f(*args, **kwargs)
+    
+    return decorated_function
+
+
+
+
+
+#########################################################
+#                                                       #
+#   Modtagning og håndtering af kald med serveren      #
 #                                                       #
 #########################################################
 
 
 
-@app.route("/", methods=["GET"]) # Default håndtering når folk besøger hjemmesiden
+@app.route("/", methods=["GET"])
 def home():
-    if 'logged_in' in session:
+    token = get_token_from_request()
+    if token and decode_jwt_token(token):
         return redirect(url_for("dashboard"))
     return redirect(url_for("login"))
 
 
 
-@app.route("/login", methods=["GET", "POST"]) # Logind håndtering (Både at besøge siden "GET" og udfylde form "POST")
+@app.route("/login", methods=["GET", "POST"])
 def login():
-    if "logged_in" in session:
+    # Tjek om brugeren allerede er logget ind
+    token = get_token_from_request()
+    if token and decode_jwt_token(token):
         return redirect(url_for("dashboard"))
-    
-    if request.method == "GET": # Hvis siden skulle besøges renders den bare
+
+    if request.method == "GET":
         return render_template("login.html")
-    
+
+
 
     # ******   Resten af denne funktion er i tilfældet "POST", hvor brugeren giver data    ******
 
@@ -43,64 +119,77 @@ def login():
     # Henter data fra html siden
     email = request.form.get("email")
     action_type = request.form.get("submit_action")
-
-
-    if action_type == "send_code": # Hvis form action-typen er "send_code", så sendes auth koden
-
-        auth_pass = pass_random() # Tilfældigt authentication kodeord laves
-        pass_manager.add_auth_code(email, auth_pass) # Koden sendes til adgangskode manageren
-
-
-        if send_mail(auth_pass, email): # Hviser fejlkode, hvis emailen ikke kunne sendes
+    
+    if action_type == "send_code":
+        auth_pass = pass_random()
+        pass_manager.add_auth_code(email, auth_pass)
+        
+        if send_mail(auth_pass, email):
             flash(f"Authentication code sent to {email} !!", "success")
         else:
             flash("Email could not be sent.", "danger")
-
-
-        session["last_sent_email"] = email
-        return render_template("login.html", last_sent_email=email) 
         
-
-
-    elif action_type == "login": # Hvis form action-typen er "login", så sendes testes koden brugeren skrev, med den lavet af password-manageren
-
-        user_auth_pass = request.form.get("auth_pass") # Henter data fra html siden
+        # Gem email i en midlertidig cookie (kun til UI-formål)
+        response = make_response(render_template("login.html", last_sent_email=email))
+        response.set_cookie('last_sent_email', email, max_age=600)  # 10 minutter max tid
+        return response
+    
+    
+    elif action_type == "login":
+        user_auth_pass = request.form.get("auth_pass")
         
         if not user_auth_pass:
-                flash("A code was not written !!", "danger")
-                return render_template("login.html", last_sent_email=email)
+            flash("A code was not written !!", "danger")
+            last_email = request.cookies.get('last_sent_email', email)
+            return render_template("login.html", last_sent_email=last_email)
         
-        if pass_manager.verify_auth_code(email, user_auth_pass): # Tester om den bruger indtastede kode er korrekt
-            session["logged_in"] = True
-            session["username"] = email
-            session.pop('last_sent_email', None)
+        if pass_manager.verify_auth_code(email, user_auth_pass):
 
+            # Opret JWT token
+            token = create_jwt_token(email)
+            
             flash("Login Successful!", "success")
-            return redirect(url_for("dashboard"))
+            
+            # Opret response og sæt JWT token
+            response = make_response(redirect(url_for("dashboard")))
+            response.set_cookie(
+                'jwt_token',
+                token,
+                httponly=True,
+                secure=False,
+                samesite='Strict',
+                max_age=JWT_EXPIRATION_HOURS
+            )
+
+            # Fjern midlertidig email cookie
+            response.delete_cookie('last_sent_email')
+            return response
+        
         else:
             flash("Invalid, expired, or already used authentication code!", "danger")
-            return render_template("login.html", last_sent_email=email)
+            last_email = request.cookies.get('last_sent_email', email)
+            return render_template("login.html", last_sent_email=last_email)
 
 
 
-@app.route("/dashboard") # Kode for dashboard siden, der smider en bruger ud, hvis de ikke er logget ind
+@app.route("/dashboard")
+@jwt_required
 def dashboard():
-    if "logged_in" not in session:
-        flash("Please log in to access this page.", "danger")
-        return redirect(url_for("login"))
-    return render_template("user_dashboard.html", username=session.get("username"))
+    return render_template("user_dashboard.html", username=request.current_user)
 
 
 
-@app.route("/logout") # Fjerner en brugers "credentials"
+@app.route("/logout")
 def logout():
-    session.pop("logged_in", None)
-    session.pop("username", None)
-
     flash("You have been logged out.", "info")
-    return redirect(url_for('login'))
+    response = make_response(redirect(url_for('login')))
+
+    response.delete_cookie('jwt_token')
+    response.delete_cookie('last_sent_email')
+
+    return response
 
 
 
-if __name__ == "__main__": # Kører scriptet hvis denne fil køres og ikke importeres
+if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
