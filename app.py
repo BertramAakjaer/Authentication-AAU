@@ -5,8 +5,9 @@ import os, jwt, time
 
 # Vores enge funktion kald
 from modules.password_generator import pass_random
-import modules.password_manager as pass_manager
 from modules.mail_sender import send_mail
+import modules.password_manager as pass_manager
+import modules.db_manager as db_manager
 
 
 
@@ -21,8 +22,6 @@ JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", os.urandom(32))
 
 JWT_ALGORITHM = 'HS256' # SHA-256
 JWT_EXPIRATION_HOURS = 24 * 3600 # Så længe en token gælder (10 timer)
-
-
 
 
 
@@ -100,58 +99,36 @@ def home():
     return redirect(url_for("login"))
 
 
-
-@app.route("/login", methods=["GET", "POST"])
-def login():
+@app.route("/auth", methods=["GET", "POST"])
+def auth():
     # Tjek om brugeren allerede er logget ind
     token = get_token_from_request()
     if token and decode_jwt_token(token):
         return redirect(url_for("dashboard"))
-
+    
+    
+    
     if request.method == "GET":
-        return render_template("login.html")
+        if request.cookies.get('sent_email'):
+            return render_template("authenticator.html")
+        else:
+            flash("Please begin log-in to access this page.", "danger")
+            return render_template("login.html")
+            
 
-
-
-    # ******   Resten af denne funktion er i tilfældet "POST", hvor brugeren giver data    ******
-
-
-    # Henter data fra html siden
-    email = request.form.get("email")
+    user_auth_pass = request.form.get("auth_pass")
+    email = request.cookies.get('sent_email')
+    
     action_type = request.form.get("submit_action")
     
-    if action_type == "send_code":
-        auth_pass = pass_random()
-        pass_manager.add_auth_code(email, auth_pass)
-        
-        if send_mail(auth_pass, email):
-            flash(f"Authentication code sent to {email} !!", "success")
-        else:
-            flash("Email could not be sent.", "danger")
-        
-        # Gem email i en midlertidig cookie (kun til UI-formål)
-        response = make_response(render_template("login.html", last_sent_email=email))
-        response.set_cookie('last_sent_email', email, max_age=600)  # 10 minutter max tid
-        return response
-    
-    
-    elif action_type == "login":
-        user_auth_pass = request.form.get("auth_pass")
-        
-        if not user_auth_pass:
-            flash("A code was not written !!", "danger")
-            last_email = request.cookies.get('last_sent_email', email)
-            return render_template("login.html", last_sent_email=last_email)
-        
+    if action_type == "check_auth":
         if pass_manager.verify_auth_code(email, user_auth_pass):
 
             # Opret JWT token
             token = create_jwt_token(email)
             
-            flash("Login Successful!", "success")
-            
-            # Opret response og sæt JWT token
             response = make_response(redirect(url_for("dashboard")))
+            
             response.set_cookie(
                 'jwt_token',
                 token,
@@ -161,21 +138,113 @@ def login():
                 max_age=JWT_EXPIRATION_HOURS
             )
 
-            # Fjern midlertidig email cookie
-            response.delete_cookie('last_sent_email')
             return response
         
         else:
             flash("Invalid, expired, or already used authentication code!", "danger")
-            last_email = request.cookies.get('last_sent_email', email)
-            return render_template("login.html", last_sent_email=last_email)
+            return render_template("authenticator.html")
 
+
+
+@app.route("/create_acc", methods=["GET", "POST"])
+def create_acc():
+    # Tjek om brugeren allerede er logget ind
+    token = get_token_from_request()
+    if token and decode_jwt_token(token):
+        return redirect(url_for("dashboard"))
+    
+    
+    if request.method == "GET":
+        return render_template("create_account.html")
+    
+    
+    email = request.form.get("email")
+    password = request.form.get("password")
+    
+    action_type = request.form.get("submit_action")
+    
+    if action_type == "account_creation":
+        
+        if not (len(password) >= 8): # Ens konto skal minimum have en adgangskode med 8 tegn
+            flash("Password must be at least 8 characthers !!", "danger")
+            return render_template("create_account.html", last_tried_email=email, last_password=password)
+        
+        if db_manager.account_exists(email):
+            flash("An account with that email already exist !!", "danger")
+            return render_template("create_account.html", last_tried_email=email, last_password=password)
+    
+    
+    
+        if db_manager.create_account(email, password):
+            flash("Account succesfully created", "success")
+            return render_template("create_account.html", last_tried_email=email, last_password=password)
+        else:
+            flash("There was a problem creating your account !!", "danger")
+            return render_template("create_account.html", last_tried_email=email, last_password=password)
+        
+
+
+
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    # Tjek om brugeren allerede er logget ind
+    token = get_token_from_request()
+    if token and decode_jwt_token(token):
+        return redirect(url_for("dashboard"))
+
+
+    if request.method == "GET":
+        response = make_response(render_template("login.html"))
+        response.delete_cookie('sent_email')
+        
+        return response
+    
+    
+    # ******   Resten af denne funktion er i tilfældet "POST", hvor brugeren giver data    ******
+
+
+    # Henter data fra html siden
+    email = request.form.get("email")
+    password = request.form.get("password")
+    
+    action_type = request.form.get("submit_action")
+    
+    
+    
+    if action_type == "login":
+        if (not db_manager.account_exists(email)):
+            flash("An account with that mail doesn't exist !!", "danger")
+            return render_template("login.html", last_tried_email=email, last_password=password)
+
+        if (not db_manager.verify_pass(email, password)):
+            flash("Wrong password !!", "danger")
+            return render_template("login.html", last_tried_email=email, last_password=password)
+            
+
+
+
+        auth_pass = pass_random()
+        pass_manager.add_auth_code(email, auth_pass)
+        
+        if send_mail(auth_pass, email):
+            flash(f"Authentication code sent to {email} !!", "success")
+        else:
+            flash("Email could not be sent.", "danger")
+            
+        response = make_response(render_template("authenticator.html"))
+        response.set_cookie('sent_email', email, max_age=600)  # 10 minutter max tid
+        return response
 
 
 @app.route("/dashboard")
 @jwt_required
 def dashboard():
-    return render_template("user_dashboard.html", username=request.current_user)
+    response = make_response(render_template("user_dashboard.html", username=request.current_user))
+    response.delete_cookie('sent_email')
+    
+    return response
 
 
 
@@ -185,9 +254,10 @@ def logout():
     response = make_response(redirect(url_for('login')))
 
     response.delete_cookie('jwt_token')
-    response.delete_cookie('last_sent_email')
+    response.delete_cookie('sent_email')
 
     return response
+
 
 
 

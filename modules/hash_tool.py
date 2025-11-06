@@ -18,17 +18,3 @@ def verify_password(password, stored_hash):
     password_bytes = password.encode('utf-8')
     
     return bcrypt.checkpw(password_bytes, decoded_hash)
-
-
-if __name__ == "__main__":
-    a = hash_password("testpass")
-    
-    print(a)
-    
-    b = verify_password("ikkerigtigpass", a)
-    
-    print(f"test 1: {b}")
-    
-    c = verify_password("testpass", a)
-    
-    print(f"test 2: {c}")

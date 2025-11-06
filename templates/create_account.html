@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AAU Authentication</title>
+    <title>AAU | Account Creation</title>
     <link 
         rel="shortcut icon" 
         href="{{ url_for('static', filename='images/aau_logo.png') }}" 
@@ -17,7 +17,7 @@
     <div class="container d-flex justify-content-center align-items-center" style="min-height: 100vh;">
         <div class="card shadow-lg p-4" style="max-width: 400px; width: 100%;">
             <div class="card-body">
-                <h2 class="card-title text-center mb-4 text-primary">AAU Authentication</h2>
+                <h2 class="card-title text-center mb-4 text-primary">Account Creation</h2>
 
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
@@ -32,7 +32,7 @@
                     {% endif %}
                 {% endwith %}
 
-                <form method="POST" action="{{ url_for('login') }}">
+                <form method="POST" action="{{ url_for('create_acc') }}">
                     
                     <div class="mb-3">
                         <label for="email" class="form-label">E-mail</label>
@@ -45,7 +45,7 @@
                             required 
                             placeholder="Example: example@gmail.com" 
                             value="{{ email_value }}"
-                        >
+                            >
                     </div>
 
                     <div class="mb-4">
@@ -58,17 +58,16 @@
                             name="password" 
                             placeholder="Example: MyS3cr3tP4ssw0rd"
                             value="{{ password_value }}"
-                            required 
                         >
                     </div>
 
-                        <button type="submit" name="submit_action" value="login" class="btn btn-primary w-100 rounded-3 py-2 shadow-sm">
-                            Log In
+                        <button type="submit" name="submit_action" value="account_creation" class="btn btn-primary w-100 rounded-3 py-2 shadow-sm">
+                            Create Account
                         </button>
-
+                    
                         <p class="text-center mt-3 mb-0">
-                            <a href="{{ url_for('create_acc') }}" class="text-decoration-none">
-                                Don't have an account? Click me.
+                            <a href="{{ url_for('login') }}" class="text-decoration-none">
+                                Back to login?
                             </a>
                         </p>
                 </form>
