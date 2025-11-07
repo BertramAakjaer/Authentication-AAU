@@ -36,11 +36,12 @@ def send_mail(auth_pass, reciever_mail, do_not_send=False):
                     "Email": sender_email, 
                     "Name": "OTP Authentication"
                 },
-                "To": { # Hvor mailen sendes til
+                "To":  [# Hvor mailen sendes til
+                { 
                     "Email": reciever_mail,
                     "Name": "AAU Authentication client"
                 }
-                ,
+                ],
                 "Subject": "P1 project, OTP code to login", # Overskrift vist på mail
                 "TextPart": f"Here is the OTP authentication code to login on the site: {auth_pass}" # Brødtekst af mail
             }
