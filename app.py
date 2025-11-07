@@ -112,7 +112,7 @@ def create_acc():
     if action_type == "account_creation":
         
         # Ens adgangskode skal være mellem 8 og 32 tegn
-        if not (len(password) >= 8 or len(password) <= 32): 
+        if not (len(password) >= 8 and len(password) <= 32): 
             flash("Password must be 8-32 characthers !!", "danger") # Viser besked på html siden
             return render_template("create_account.html", last_tried_email=email, last_password=password) # Indlæser html siden med det sidste password og email allerede indlæst
         
