@@ -1,15 +1,17 @@
 import random
 
-def pass_random():
-    symbols = "abcdefghkmnopqrstuvwxyz0123456789"
+def pass_random(): # Funktion der kan kaldes af andre scripts
+    symbols = "abcdefghkmnopqrstuvwxyz0123456789" # Alle gyldige tegn der kan bruges
 
-    auth_pass = ""
+    auth_pass = "" # En tom klartekst, der bruges til at putte tegn i
 
-    for i in range(6):
-        temp = random.choice(symbols)
-        if random.randint(1, 100) > 50:
-            temp = temp.upper()
-        auth_pass += temp
+    for i in range(6): # Tilføjer x antal tegn til klartekst strengen
+        
+        temp = random.choice(symbols) # Henter et tilfældigt symbol fra de "gyldige tegn" om gemmer den i en temporary variable
+        if random.randint(1, 10) <= 5: # 50% chance for at lave bogstaver til store
+            temp = temp.upper() # Laver bogstav til stort
+            
+        auth_pass += temp # Tilføjer det givne tegn til variablen
 
-    print(auth_pass)
-    return auth_pass
+    print(f"Made auth pass: {auth_pass}")
+    return auth_pass # Returnerer den endelige kode
