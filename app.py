@@ -14,8 +14,10 @@ import modules.password_manager as pass_manager
 import modules.db_manager as db_manager
 
 
-
 app = Flask(__name__) # Initialisere serveren
+app.secret_key = os.getenv("SECRET_KEY", os.urandom(24)) # Sætter en tilfældig sammensætning af tal som "hemmelig" kode
+
+
 is_debug = False # Til at tjekke om programmet køres under test
 
 load_dotenv() # Henter api keys værdier fra filen .env
