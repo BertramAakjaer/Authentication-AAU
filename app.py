@@ -63,11 +63,23 @@ def decode_jwt_token(token):
         return None  # Token er udløbet eller ugyldig
 
 
+#########################################################
+#                                                       #
+#   Standard code cleanup functions                     #
+#                                                       #
+#########################################################
+
+# Krav til password fra user (min 8 tegn og maks 32)
+def accept_password(password):
+    return (len(password) >= 8 and len(password) <= 32)
+
+
+
 
 
 #########################################################
 #                                                       #
-#   Modtagning og håndtering af kald med serveren      #
+#   Modtagning og håndtering af kald med serveren       #
 #                                                       #
 #########################################################
 
@@ -112,7 +124,7 @@ def create_acc():
     if action_type == "account_creation":
         
         # Ens adgangskode skal være mellem 8 og 32 tegn
-        if not (len(password) >= 8 and len(password) <= 32): 
+        if not accept_password(password): 
             flash("Password must be 8-32 characthers !!", "danger") # Viser besked på html siden
             return render_template("create_account.html", last_tried_email=email, last_password=password) # Indlæser html siden med det sidste password og email allerede indlæst
         
@@ -175,12 +187,12 @@ def login():
 
         auth_pass = pass_random() # Bruger scriptet password_generator.py til at oprette en tilfældig kode
         
-        if send_mail(auth_pass, email): # Hvis mailen sendes succesfuldt returnerers true
+        if send_mail(auth_pass, email, True): # Hvis mailen sendes succesfuldt returnerers true
             flash(f"Authentication code sent to {email} !!", "success") # Viser besked på html siden
 
             pass_manager.add_auth_code(email, auth_pass) # Gemmer den oprettede authentication kode i password_manager.py scriptet
             
-            response = make_response(render_template("authenticator.html")) # Klargør html siden til at sende med cookie
+            response = make_response(redirect(url_for("auth"))) # Klargør html siden til at sende med cookie
             response.set_cookie('sent_email', email) # Gemmer mailen authentication koden belv sendt til, som cookie, så den kan hentes på en anden side       
             return response
         
@@ -227,18 +239,21 @@ def auth():
             # Opret JWT token med brugerens mail som payload gemt i den
             token = create_jwt_token(email)
             
-            # 
-            response = make_response(render_template("user_dashboard.html")) # Klargør html siden til at sende med cookie
-            response.set_cookie( # Gemmer den oprettede JWT token som cookie hos clienten
-                'jwt_token', # Navn
-                token, # Signeret payload 
-                httponly=True, # Kan ikke røres af JavaScript
-                secure=(not is_debug), # Skal være over https (Krypteret connection)
-                samesite='Strict', # Andre åbne faner kan ikke tilgå cookien
-                max_age=JWT_EXPIRATION_HOURS # Sætter cookie specifik maks levetid
+            # Opret Redirect Response og tilføj cookie
+            response = make_response(redirect(url_for("dashboard")))
+
+            # Gem den oprettede JWT token som cookie hos clienten
+            response.set_cookie(
+                'jwt_token',
+                token,
+                httponly=True,
+                secure=(not is_debug),
+                samesite='Strict',
+                max_age=JWT_EXPIRATION_HOURS
             )
 
-            return response
+            return response # Returnerer redirect MED cookien
+        
         
         else:
             flash("Invalid, expired, or already used authentication code!", "danger") # Viser besked på html siden
@@ -248,7 +263,7 @@ def auth():
 
 
 # Kode til at tilgå siden, man skal være logget ind for at tilgå
-@app.route("/dashboard")
+@app.route("/dashboard", methods=["GET", "POST"])
 def dashboard():
     token = request.cookies.get('jwt_token') # Henter JWT token'en fra clientens cookies
     
@@ -263,13 +278,54 @@ def dashboard():
         flash("Session expired. Please log in again.", "danger") # Viser besked på html siden
         return redirect(url_for("login"))
     
-    # Tilføjer clientens username til html siden så det kan vises på skærmen
-    username = db_manager.get_username(payload['email'])
+    email = payload['email']
+    if (not db_manager.account_exists(email)):
+        flash("Account doesn't exists", "danger") # Viser besked på html siden
+        return redirect(url_for("login"))
+    
+    if request.method == "GET":    
+        # Tilføjer clientens username til html siden så det kan vises på skærmen
+        username = db_manager.get_username(email)
+        created_at, last_modified = db_manager.get_readable_timestamps(email)
+        
+        response = make_response(render_template("user_dashboard.html", username=username, last_modified=last_modified, created_at=created_at, email=email)) # Klargør html siden med clientens username bagt ind
+        response.delete_cookie('sent_email') # Sletter den mail der blev brugt til authentication
+        return response
     
     
-    response = make_response(render_template("user_dashboard.html", username=username)) # Klargør html siden med clientens username bagt ind
-    response.delete_cookie('sent_email') # Sletter den mail der blev brugt til authentication
-    return response
+    
+    if request.method == "POST":
+        action_type = request.form.get("submit_action")
+        
+        if action_type == "change_password":
+            new_password = request.form.get("password")
+            if not accept_password(new_password):
+                flash("Password must be 8-32 characthers !!", "danger")
+                return redirect(url_for("dashboard"))
+            
+            if not db_manager.update_password(email, new_password):
+                flash("Password update failed, try again later", "danger")
+                return redirect(url_for("dashboard"))
+                
+            flash("Password is updated", "success")
+            return redirect(url_for("logout"))
+        
+        elif action_type == "change_username":
+            new_username = request.form.get("username")
+            
+            if not db_manager.update_username(email, new_username):
+                flash("Username update failed, try again later", "danger")
+                return redirect(url_for("dashboard"))
+                
+            flash("Username updated successfully", "success")
+            return redirect(url_for("dashboard"))
+        
+        elif action_type == "delete_account":
+            if not db_manager.delete_account(email):
+                flash("Account deletion failed, try again later", "danger")
+                return redirect(url_for("dashboard"))
+            return redirect(url_for("logout"))
+            
 
 
 # Kode til at logge en bruger ud igen

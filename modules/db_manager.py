@@ -1,4 +1,5 @@
 import os
+from datetime import datetime, timezone, timedelta
 from supabase import create_client
 from dotenv import load_dotenv
 
@@ -28,7 +29,7 @@ def account_exists(email):
             .limit(1)\
             .execute()
             
-        return bool(response.data)
+        return True if (response.data) else False
 
     except:
         return False
@@ -100,10 +101,127 @@ def get_username(email):
 
 
 
+# Ændrer password
+def update_password(email, new_pass):
+    email = email.lower()
+    new_pass = hash.hash_password(new_pass)
+
+    update_data = {"password": new_pass}
+    try:
+        response = supabase.table("users").update(update_data).eq("email", email).execute()
+        update_last_login(email)
+        return True if (response.data) else False
+
+    except:
+        return False
+    
+
+# Ændre det felt i databasen, hvor der står hvornår kontoen sidst er opdateret
+def update_last_login(email):
+    email = email.lower()
+
+    utc_plus_one = timezone(timedelta(hours=1))
+
+    current_utc_plus_one_datetime = datetime.now(utc_plus_one)
+
+    current_timestamp = current_utc_plus_one_datetime.isoformat().split('+')[0]
+    
+    update_data = {"last_modified_at": current_timestamp}
+    
+    try:
+
+        response = supabase.table("users")\
+            .update(update_data)\
+            .eq("email", email)\
+            .execute()
+        
+        return True if (response.data) else False
+    
+    except:
+        return False
+    
+
+# Ændrer username
+def update_username(email, new_username):
+    email = email.lower()
+    update_data = {"username": new_username}
+    
+    try:
+        response = supabase.table("users").update(update_data).eq("email", email).execute()
+        return True if (response.data) else False
+
+    except:
+        return False
+
+
+# Sletter en konto ud fra email
+def delete_account(email):
+    email = email.lower()
+
+    try:
+        # Udfører sletningen, hvor emailen matcher
+        response = supabase.table("users")\
+            .delete()\
+            .eq("email", email)\
+            .execute()
+        
+        # Tjekker om sletningen havde data (dvs. at en række blev slettet)
+        # Hvis response.data er en tom liste [], betyder det at ingen række matchede og blev slettet.
+        return True if response.data else False
+
+    except:
+        # Håndterer eventuelle fejl under sletningen
+        return False
 
 
 
 
+def get_readable_timestamps(email):
+    email = email.lower()
+    last_modified_at = None
+    created_at = None
+    
+    formatted_last_modfied_at = None
+    formatted_created_at = None
+    
+
+    response = supabase.table("users")\
+        .select("last_modified_at")\
+        .eq('email', email)\
+        .single()\
+        .execute()
+
+    row_data = response.data
+    
+    if row_data and row_data.get("last_modified_at"):
+        last_modified_at = row_data.get("last_modified_at")
+    
+    response = supabase.table("users")\
+        .select("created_at")\
+        .eq('email', email)\
+        .single()\
+        .execute()
+
+    row_data = response.data
+    
+    if row_data and row_data.get("created_at"):
+        created_at = row_data.get("created_at")
+        
+
+    if last_modified_at:
+        dt_object = datetime.fromisoformat(last_modified_at)
+        format_string = "%H:%M %d/%m/%Y"
+
+        formatted_last_modfied_at = dt_object.strftime(format_string)
+            
+    if created_at:
+        dt_object = datetime.fromisoformat(created_at)
+        format_string = "%H:%M %d/%m/%Y"
+
+        formatted_created_at = dt_object.strftime(format_string)
+    
+    return (formatted_created_at, formatted_last_modfied_at)
+            
 
 
 
@@ -119,10 +237,3 @@ def get_data():
     response = supabase.table("users").select("*").eq("email", "jan45@realmail.com").execute()
     print("Filtered Users:", response.data)
 
-def update_password(email, new_pass):
-    email = email.lower()
-    new_pass = hash.hash_password(new_pass)
-
-    update_data = {"password": new_pass}
-    response = supabase.table("countries").update(update_data).eq("email", email).execute()
-    print("Updated Data:", response.data)
