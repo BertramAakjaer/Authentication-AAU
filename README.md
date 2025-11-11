@@ -12,7 +12,7 @@ git clone https://github.com/BertramAakjaer/Authentication-AAU.git
 cd Authentication-AAU/
 
 # Install required libraries
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 
 # Kør serveren
 python app.py
