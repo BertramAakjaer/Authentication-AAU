@@ -8,9 +8,9 @@ from dotenv import load_dotenv
 import os, jwt, time
 
 # Vores enge funktion kald
-from modules.password_generator import pass_random
+from modules.auth_code_generator import auth_code_random
 from modules.mail_sender import send_mail
-import modules.password_manager as pass_manager
+import modules.auth_code_manager as pass_manager
 import modules.db_manager as db_manager
 
 
@@ -184,7 +184,7 @@ def login():
         # ******   Resten af koden klargør og sender en kode til ens mail    ******
 
 
-        auth_pass = pass_random() # Bruger scriptet password_generator.py til at oprette en tilfældig kode
+        auth_pass = auth_code_random() # Bruger scriptet password_generator.py til at oprette en tilfældig kode
         
         if send_mail(auth_pass, email): # Hvis mailen sendes succesfuldt returnerers true
             flash(f"Authentication code sent to {email} !!", "success") # Viser besked på html siden

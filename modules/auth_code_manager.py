@@ -10,7 +10,7 @@ def add_auth_code(email, auth_pass):
     print(f"Added password {auth_pass}")
 
 # Selv-kaldt funktion til at fjerne udløbede adgangskoder
-def remove_expired_passwords():
+def remove_expired_auth_codes():
     
     for i in auth_codes: # Går igennem alle gemte koder
         if (int(time.time()) - i[2]) >= max_auth_time: # Tjekker om koden er udløbet
@@ -24,7 +24,7 @@ def remove_expired_passwords():
 
 # Checker om en kode findes i listen
 def verify_auth_code(email, user_written_pass):
-    remove_expired_passwords() # Fjerner udløbede koder
+    remove_expired_auth_codes() # Fjerner udløbede koder
     
     for i in auth_codes: # Tjekker alle koder igennem
         if i[0] == email and i[1] == user_written_pass: # Tjekker om mail og den givne authentication kode passer
