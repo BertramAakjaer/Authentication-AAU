@@ -1,6 +1,6 @@
 import random
 
-def pass_random(): # Funktion der kan kaldes af andre scripts
+def auth_code_random(): # Funktion der kan kaldes af andre scripts
     symbols = "abcdefghkmnopqrstuvwxyz0123456789" # Alle gyldige tegn der kan bruges
 
     auth_pass = "" # En tom klartekst, der bruges til at putte tegn i
