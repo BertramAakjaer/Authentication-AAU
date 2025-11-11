@@ -70,11 +70,42 @@ def decode_jwt_token(token):
 #########################################################
 
 # Krav til password fra user (min 8 tegn og maks 32)
+#def accept_password(password):
+#    return (len(password) >= 8 and len(password) <= 32)
+
 def accept_password(password):
-    return (len(password) >= 8 and len(password) <= 32)
+    SpecialSym = ['$', '@', '#', '%','!','%','^','&','*','()','_','+','-','[]','|',':',';',',','.','<>','?','/']
+    val = True
 
+    # Check length
+    if len(password) < 10:
+        flash('Length should be at least 10')
+        val = False
+        
+    if len(password) > 20:
+        flash('Length should not be greater than 20')
+        val = False
 
+    # Check for digits/number
+    if not any(char.isdigit() for char in password):
+        flash('Password should have at least one number')
+        val = False
 
+    # Check for uppercase letters
+    if not any(char.isupper() for char in password):
+        flash('Password should have at least one uppercase letter')
+        val = False
+
+    # Check for lowercase letters
+    if not any(char.islower() for char in password):
+        flash('Password should have at least one lowercase letter')
+        val = False
+
+    # Check for special symbols
+    if not any(char in SpecialSym for char in password):
+        flash('Password should have at least one of the symbols @#$%^&*()_+[]|;:,.<>?/')
+        val = False
+    return val
 
 
 #########################################################
@@ -124,7 +155,7 @@ def create_acc():
         
         # Ens adgangskode skal være mellem 8 og 32 tegn
         if not accept_password(password): 
-            flash("Password must be 8-32 characthers !!", "danger") # Viser besked på html siden
+            #flash("Password must be 8-32 characthers !!", "danger") # Viser besked på html siden
             return render_template("create_account.html", last_tried_email=email, last_password=password) # Indlæser html siden med det sidste password og email allerede indlæst
         
         # Tjekker om der findes en konto med den givne mail (scriptet db_manager.py bruges)
