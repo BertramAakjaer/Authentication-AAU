@@ -97,7 +97,6 @@ def home():
 
 
 
-
 # Kode til at oprette en konto
 @app.route("/create_acc", methods=["GET", "POST"])
 def create_acc():
@@ -137,7 +136,7 @@ def create_acc():
     
         if db_manager.create_account(email, password):
             flash("Account succesfully created", "success") # Viser besked på html siden
-            return render_template("create_account.html", last_tried_email=email, last_password=password) # Indlæser html siden med det sidste password og email allerede indlæst
+            return redirect(url_for("login"))
         else:
             flash("There was a problem creating your account !!", "danger") # Viser besked på html siden
             return render_template("create_account.html", last_tried_email=email, last_password=password) # Indlæser html siden med det sidste password og email allerede indlæst
@@ -187,7 +186,7 @@ def login():
 
         auth_pass = pass_random() # Bruger scriptet password_generator.py til at oprette en tilfældig kode
         
-        if send_mail(auth_pass, email, True): # Hvis mailen sendes succesfuldt returnerers true
+        if send_mail(auth_pass, email): # Hvis mailen sendes succesfuldt returnerers true
             flash(f"Authentication code sent to {email} !!", "success") # Viser besked på html siden
 
             pass_manager.add_auth_code(email, auth_pass) # Gemmer den oprettede authentication kode i password_manager.py scriptet
@@ -294,36 +293,51 @@ def dashboard():
     
     
     
-    if request.method == "POST":
-        action_type = request.form.get("submit_action")
+    # ******   Resten af denne funktion er i tilfældet "POST", hvor brugeren giver data    ******
+    
+    
+    
+    
+    if request.method == "POST": # Metoderne til at ændre på en konto
+        action_type = request.form.get("submit_action") # Henter hvad der skal ændres
         
-        if action_type == "change_password":
-            new_password = request.form.get("password")
-            if not accept_password(new_password):
+        if action_type == "change_password": 
+            new_password = request.form.get("password") # Henter det nye password brugeren indskrev
+            
+            if not accept_password(new_password): # Tjekker om adgangskoden overholder vores regler
                 flash("Password must be 8-32 characthers !!", "danger")
                 return redirect(url_for("dashboard"))
             
-            if not db_manager.update_password(email, new_password):
+            if not db_manager.update_password(email, new_password): # Opdaterer adgangskoden i databasen
                 flash("Password update failed, try again later", "danger")
                 return redirect(url_for("dashboard"))
                 
+            # Hvis alt lykkedes
             flash("Password is updated", "success")
             return redirect(url_for("logout"))
         
+        
+        
         elif action_type == "change_username":
-            new_username = request.form.get("username")
+            new_username = request.form.get("username") # Henter det nye username brugeren har indskrevet
             
-            if not db_manager.update_username(email, new_username):
+            if not db_manager.update_username(email, new_username): # Opdaterer brugernavnet i databasen
                 flash("Username update failed, try again later", "danger")
                 return redirect(url_for("dashboard"))
-                
+            
+            # Hvis alt lykkedes  
             flash("Username updated successfully", "success")
             return redirect(url_for("dashboard"))
         
+        
+        
         elif action_type == "delete_account":
-            if not db_manager.delete_account(email):
+            
+            if not db_manager.delete_account(email): # Sender anmodning om at slette account i databasen
                 flash("Account deletion failed, try again later", "danger")
                 return redirect(url_for("dashboard"))
+            
+            # Hvis sletningen lykkedes
             return redirect(url_for("logout"))
             
 
