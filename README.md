@@ -17,3 +17,6 @@ python -m pip install -r requirements.txt
 # Kør serveren
 python app.py
 ```
+
+## Test
+test
