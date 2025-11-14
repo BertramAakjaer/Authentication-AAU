@@ -17,14 +17,3 @@ python -m pip install -r requirements.txt
 # Kør serveren
 python app.py
 ```
-
-## Test
-test
-
-## TEST12122112121
-121212
-
-
-
-
-dette er en test..
