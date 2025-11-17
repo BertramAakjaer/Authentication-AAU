@@ -5,8 +5,8 @@ import os, re
 load_dotenv() # Henter api keys værdier fra .env filen
 
 # Henter specifikke værdier fra .env filen
-api_key = os.getenv("API_PUBLIC")
-api_secret = os.getenv("API_SECRET")
+api_key = os.getenv("MAILJET_PUBLIC")
+api_secret = os.getenv("MAILJET_SECRET")
 sender_email = os.getenv("EMAIL_SENDER")
 
 # Starter mailjet klienten
