@@ -70,10 +70,43 @@ def decode_jwt_token(token):
 #########################################################
 
 # Krav til password fra user (min 8 tegn og maks 32)
+#def accept_password(password):
+#    return (len(password) >= 8 and len(password) <= 32)
+
 def accept_password(password):
-    return (len(password) >= 8 and len(password) <= 32)
+    SpecialSym = ['$', '@', '#', '%','!','%','^','&','*','()','_','+','-','[]','|',':',';',',','.','<>','?','/']
+    accept_pass_bool = True
 
+    # Check length
+    if len(password) < 10:
+        flash('Length should be at least 10', "danger")
+        accept_pass_bool = False
+        
+    if len(password) > 20:
+        flash('Length should not be greater than 20', "danger")
+        accept_pass_bool = False
 
+    # Check for digits/number
+    if not any(char.isdigit() for char in password):
+        flash('Password should have at least one number', "danger")
+        accept_pass_bool = False
+
+    # Check for uppercase letters
+    if not any(char.isupper() for char in password):
+        flash('Password should have at least one uppercase letter', "danger")
+        accept_pass_bool = False
+
+    # Check for lowercase letters
+    if not any(char.islower() for char in password):
+        flash('Password should have at least one lowercase letter', "danger")
+        accept_pass_bool = False
+
+    # Check for special symbols
+    if not any(char in SpecialSym for char in password):
+        flash('Password should have at least one of the symbols @#$%^&*()_+[]|;:,.<>?/', "danger")
+        accept_pass_bool = False
+        
+    return accept_pass_bool
 
 
 
@@ -124,7 +157,7 @@ def create_acc():
         
         # Ens adgangskode skal være mellem 8 og 32 tegn
         if not accept_password(password): 
-            flash("Password must be 8-32 characthers !!", "danger") # Viser besked på html siden
+            #flash("Password must be 8-32 characthers !!", "danger") # Viser besked på html siden
             return render_template("create_account.html", last_tried_email=email, last_password=password) # Indlæser html siden med det sidste password og email allerede indlæst
         
         # Tjekker om der findes en konto med den givne mail (scriptet db_manager.py bruges)
@@ -305,7 +338,7 @@ def dashboard():
             new_password = request.form.get("password") # Henter det nye password brugeren indskrev
             
             if not accept_password(new_password): # Tjekker om adgangskoden overholder vores regler
-                flash("Password must be 8-32 characthers !!", "danger")
+                # flash("Password must be 8-32 characthers !!", "danger")
                 return redirect(url_for("dashboard"))
             
             if not db_manager.update_password(email, new_password): # Opdaterer adgangskoden i databasen

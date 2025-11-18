@@ -18,7 +18,7 @@ def remove_expired_auth_codes():
             print(f"removed {i} with the time difference {(int(time.time()) - i[2])}")
         else:
             # Da koderne er oprettet i samme rækkefølge som de ligger (fifo),
-            # så ved vi at alle efter en kode der ikke er udløbet,heller ikke
+            # så ved vi at alle efter en kode der ikke er udløbet, heller ikke
             # er udløbet og vi kan derfor sparer tid ved bare at kalde "break"
             break 
 
