@@ -19,6 +19,8 @@ def is_valid_email(email):
     return re.match(r"[^@]+@[^@]+\.[^@]+$", email) is not None
 
 
+
+
 # Funktion der kan kaldes til at sende authentication koden til mail
 def send_mail(auth_pass, reciever_mail, do_not_send=False):
     if (do_not_send): # Kan bruges til at teste uden at bruge API tokens
@@ -48,8 +50,28 @@ def send_mail(auth_pass, reciever_mail, do_not_send=False):
         ]
     }
     
+    data_pretty = {
+        'Messages': [
+            {
+                "From": { # Hvor mailen sendes fra
+                    "Email": sender_email, 
+                    "Name": "OTP Authentication"
+                },
+                "To":  [# Hvor mailen sendes til
+                { 
+                    "Email": reciever_mail,
+                    "Name": "AAU Authentication client"
+                }
+                ],
+                "Subject": "P1 project, OTP code to login", # Overskrift vist på mail
+                "TextPart": f"Here is the OTP authentication code to login on the site: {auth_pass}" # Brødtekst af mail
+            }
+        ]
+    }
+    
+    
     try:
-        result = mailjet.send.create(data=data) # Prøver at sende mail og får værdien "result", som giver status'en for den sendte mail
+        result = mailjet.send.create(data=data_pretty) # Prøver at sende mail og får værdien "result", som giver status'en for den sendte mail
 
         if result.status_code == 200: # 200 = standard kode for success
             return True
