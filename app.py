@@ -75,37 +75,39 @@ def decode_jwt_token(token):
 
 def accept_password(password):
     SpecialSym = ['$', '@', '#', '%','!','%','^','&','*','()','_','+','-','[]','|',':',';',',','.','<>','?','/']
-    val = True
+    accept_pass_bool = True
 
     # Check length
     if len(password) < 10:
-        flash('Length should be at least 10')
-        val = False
+        flash('Length should be at least 10', "danger")
+        accept_pass_bool = False
         
     if len(password) > 20:
-        flash('Length should not be greater than 20')
-        val = False
+        flash('Length should not be greater than 20', "danger")
+        accept_pass_bool = False
 
     # Check for digits/number
     if not any(char.isdigit() for char in password):
-        flash('Password should have at least one number')
-        val = False
+        flash('Password should have at least one number', "danger")
+        accept_pass_bool = False
 
     # Check for uppercase letters
     if not any(char.isupper() for char in password):
-        flash('Password should have at least one uppercase letter')
-        val = False
+        flash('Password should have at least one uppercase letter', "danger")
+        accept_pass_bool = False
 
     # Check for lowercase letters
     if not any(char.islower() for char in password):
-        flash('Password should have at least one lowercase letter')
-        val = False
+        flash('Password should have at least one lowercase letter', "danger")
+        accept_pass_bool = False
 
     # Check for special symbols
     if not any(char in SpecialSym for char in password):
-        flash('Password should have at least one of the symbols @#$%^&*()_+[]|;:,.<>?/')
-        val = False
-    return val
+        flash('Password should have at least one of the symbols @#$%^&*()_+[]|;:,.<>?/', "danger")
+        accept_pass_bool = False
+        
+    return accept_pass_bool
+
 
 
 #########################################################
@@ -336,7 +338,7 @@ def dashboard():
             new_password = request.form.get("password") # Henter det nye password brugeren indskrev
             
             if not accept_password(new_password): # Tjekker om adgangskoden overholder vores regler
-                flash("Password must be 8-32 characthers !!", "danger")
+                # flash("Password must be 8-32 characthers !!", "danger")
                 return redirect(url_for("dashboard"))
             
             if not db_manager.update_password(email, new_password): # Opdaterer adgangskoden i databasen
