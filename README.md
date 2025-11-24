@@ -9,14 +9,14 @@
 > A custom, secure Two-Factor Authentication (2FA) service built with Flask for a cybersecurity project at AAU. It demonstrates secure user login using Email Time-based One-Time Passwords (TOTP).
 
 
-## ✔️ Features
+## Features
 
 - **Two-Factor Authentication (2FA) via Email TOTP**: Secure login requires both a password and a time-sensitive, single-use code.
 - **User Account Management**: Secure creation and validation of new user accounts.
 - **Account Configuration**: Includes functionality for changing password, updating username, and permanent account deletion.
 
 
-## ⏰ Installation & Setup
+## Installation & Setup
 > [!Warning]
 >  This project is made to be ran on a server using the [gunicorn](https://gunicorn.org/) python libary, but can be ran locally like showed firstly here.
 > 
@@ -65,7 +65,7 @@ JWT_SECRET="<a_randomly_generated_secret_key>"
 ```
 
 
-## 💻 Usage
+## Usage
 > [!NOTE]
 >  Here is shown 2 different ways to run the program, `nr. 1` is for running the program locally in debug mode, and `nr. 2` is in a production enviroment, like on a server.
 
@@ -83,10 +83,10 @@ gunicorn app:app
 
 
 
-## 🔧 Technical Details
+## Technical Details
 Will be added later
 
-## 📚 Python Libaries
+## Python Libaries
 
 - [Flask](https://flask.palletsprojects.com/en/stable/) - Python webserver libary for hosting html content and handeling backend
 - [bcrypt](https://github.com/pyca/bcrypt/) - Libary for secure hashing and hash validation
