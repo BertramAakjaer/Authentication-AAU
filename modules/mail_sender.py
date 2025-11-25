@@ -1,5 +1,13 @@
 from mailjet_rest import Client
 from dotenv import load_dotenv
+from datetime import datetime
+from zoneinfo import ZoneInfo
+from datetime import datetime
+from datetime import datetime, timedelta
+
+
+
+
 import os, re
 
 load_dotenv() # Henter api keys værdier fra .env filen
@@ -55,7 +63,7 @@ def send_mail(auth_pass, reciever_mail, do_not_send=False):
             {
                 "From": { # Hvor mailen sendes fra
                     "Email": sender_email, 
-                    "Name": "OTP Authentication"
+                    "Name": "AAU Security System"
                 },
                 "To":  [# Hvor mailen sendes til
                 { 
@@ -63,8 +71,10 @@ def send_mail(auth_pass, reciever_mail, do_not_send=False):
                     "Name": "AAU Authentication client"
                 }
                 ],
-                "Subject": "P1 project, OTP code to login", # Overskrift vist på mail
-                "TextPart": f"Here is the OTP authentication code to login on the site: {auth_pass}" # Brødtekst af mail
+                "Subject": "Your One-Time Login Code", # Overskrift vist på mail
+                "TextPart": f"You requested a one-time login code for your AAU P1 project account on {(datetime.utcnow() + timedelta(hours=1)).strftime('%Y-%m-%d %H:%M UTC')}.\n\nYour code: {auth_pass}\n\nIf this wasn't you, ignore this message or contact support.\n\nAAU Security (automated) • P1 project Group-3"
+
+ # Brødtekst af mail
             }
         ]
     }
