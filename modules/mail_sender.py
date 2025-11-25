@@ -98,7 +98,7 @@ def send_mail(auth_pass, reciever_mail, do_not_send=False):
                 </div>
                 
                 <p style="font-size: 14px; color: #666666; margin-bottom: 0;">
-                    The code is valid in 10 minutes
+                    The code is expires in 10 minutes
                 </p>
             </div>
             
