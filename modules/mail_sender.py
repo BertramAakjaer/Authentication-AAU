@@ -37,46 +37,7 @@ def send_mail(auth_pass, reciever_mail, do_not_send=False):
     current_time = (datetime.utcnow() + timedelta(hours=1)).strftime('%Y-%m-%d %H:%M UTC')
     
     
-    # Formateret struktur for besked der sendes
-    data = {
-        'Messages': [
-            {
-                "From": { # Hvor mailen sendes fra
-                    "Email": sender_email, 
-                    "Name": "OTP Authentication"
-                },
-                "To":  [# Hvor mailen sendes til
-                { 
-                    "Email": reciever_mail,
-                    "Name": "AAU Authentication client"
-                }
-                ],
-                "Subject": "P1 project, OTP code to login", # Overskrift vist på mail
-                "TextPart": f"Here is the OTP authentication code to login on the site: {auth_pass}" # Brødtekst af mail
-            }
-        ]
-    }
-    
-    data_pretty = {
-        'Messages': [
-            {
-                "From": { # Hvor mailen sendes fra
-                    "Email": sender_email, 
-                    "Name": "AAU Security System"
-                },
-                "To":  [# Hvor mailen sendes til
-                { 
-                    "Email": reciever_mail,
-                    "Name": "AAU Authentication client"
-                }
-                ],
-                "Subject": "Your One-Time Login Code", # Overskrift vist på mail
-                "TextPart": f"You requested a one-time login code for your AAU P1 project account on {current_time}.\n\nYour code: {auth_pass}\n\nIf this wasn't you, ignore this message or contact support.\n\nAAU Security (automated) • P1 project Group-3"
-
-            }
-        ]
-    }
-    
+    # Formateret struktur for besked der sendes    
     html_content = f"""
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f4f4f4; padding: 20px;">
         <div style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
@@ -98,7 +59,7 @@ def send_mail(auth_pass, reciever_mail, do_not_send=False):
                 </div>
                 
                 <p style="font-size: 14px; color: #666666; margin-bottom: 0;">
-                    The code is expires in 10 minutes
+                    The code is expires in 5 minutes
                 </p>
             </div>
             
