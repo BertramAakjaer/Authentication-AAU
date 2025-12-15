@@ -8,6 +8,7 @@
 ```
 > A custom, secure Two-Factor Authentication (2FA) service built with Flask for a cybersecurity project at AAU. It demonstrates secure user login using Email Time-based One-Time Passwords (TOTP).
 
+Test out the product at: [authentication-aau.onrender.com/](https://authentication-aau.onrender.com/)
 
 ## Features
 
